@@ -43,6 +43,28 @@ const STATUS_UI = {
   rejected: { icon: "&#10060;", title: "Account Rejected", note: "Naya account banane se pehle admin se baat karein." },
 };
 
+let toastTimer = null;
+function premiumToast(title, msg, icon) {
+  const t = $("#ptToast");
+  $("#ptTitle").textContent = title;
+  $("#ptMsg").textContent = msg;
+  $("#ptIcon").innerHTML = icon || "&#9203;";
+  t.hidden = false;
+  t.classList.remove("show", "hide");
+  void t.offsetWidth;
+  t.classList.add("show");
+  const bar = $("#ptBar");
+  bar.style.animation = "none";
+  void bar.offsetWidth;
+  bar.style.animation = "";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    t.classList.remove("show");
+    t.classList.add("hide");
+    setTimeout(() => { t.hidden = true; }, 550);
+  }, 5200);
+}
+
 function showStatus(status, id) {
   const view = $("#statusView");
   const ui = STATUS_UI[status] || STATUS_UI.pending;
@@ -92,6 +114,30 @@ $("#stRefresh").addEventListener("click", async () => {
   }
 });
 
+let premTimer = null;
+function showPremToast() {
+  const t = $("#premToast");
+  t.classList.remove("pt-out");
+  t.hidden = false;
+  void t.offsetWidth;
+  const bar = t.querySelector(".pt-bar i");
+  if (bar) {
+    bar.style.animation = "none";
+    void bar.offsetWidth;
+    bar.style.animation = "";
+  }
+  clearTimeout(premTimer);
+  premTimer = setTimeout(hidePremToast, 7000);
+}
+function hidePremToast() {
+  const t = $("#premToast");
+  if (t.hidden) return;
+  clearTimeout(premTimer);
+  t.classList.add("pt-out");
+  setTimeout(() => { t.hidden = true; t.classList.remove("pt-out"); }, 380);
+}
+$("#ptClose").addEventListener("click", hidePremToast);
+
 $("#loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const err = $("#loginError");
@@ -107,6 +153,11 @@ $("#loginForm").addEventListener("submit", async (e) => {
   } catch (ex) {
     if (ex.http === 403 && ex.data && ex.data.status) {
       showStatus(ex.data.status, savedId);
+      if (ex.data.status === "pending") {
+        premiumToast("Wait For Approval", "Aapka account admin approval ka muntazir hai — thoda intezar karein.", "&#9203;");
+      } else {
+        premiumToast(ex.data.status === "blocked" ? "Account Blocked" : "Account Rejected", ex.message, ex.data.status === "blocked" ? "&#128683;" : "&#10060;");
+      }
     } else {
       showErr(err, ex.message || "Login fail hua");
     }
@@ -126,7 +177,9 @@ $("#regForm").addEventListener("submit", async (e) => {
     const r = await apiRegister($("#regName").value, $("#regEmail").value, p);
     savedId = r.email || $("#regEmail").value.trim();
     savedPass = p;
+    showPremToast();
     showStatus("pending", savedId);
+    premiumToast("Wait For Approval", "Account ban gaya — admin approve karega, tab tak login nahi milegi.", "&#9203;");
   } catch (ex) {
     showErr(err, ex.message || "Register fail hua");
   } finally {

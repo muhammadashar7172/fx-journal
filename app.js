@@ -252,7 +252,7 @@ function outcomeClass(o) {
   return o === "Win" ? "row-win" : o === "Loss" ? "row-loss" : o === "Break Even" ? "row-be" : "";
 }
 
-function rowHTML(t, date, index, total, isToday) {
+function rowHTML(t, date, index, total, isToday, isLast) {
   const opts = ["", "Win", "Loss", "Break Even", "Pending"]
     .map((o) => `<option value="${o}" ${t.outcome === o ? "selected" : ""}>${o || "Select"}</option>`)
     .join("");
@@ -270,7 +270,7 @@ function rowHTML(t, date, index, total, isToday) {
       <div class="cell-day">
         <span class="day-name">${dayName(date)}</span>
         <span class="day-badge">D${index + 1}</span>
-        ${total === 1 ? `<button class="add-trade" data-act="add" data-date="${date}" title="Add trade for this day">+</button>` : ""}
+        ${isLast && total < 5 ? `<button class="add-trade" data-act="add" data-date="${date}" title="Add trade for this day (max 5)">+</button>` : ""}
       </div>
     </td>
     <td>
@@ -337,7 +337,7 @@ function renderTable() {
   dates.forEach((d, i) => {
     const list = groups[d] || [];
     if (!list.length) list.push(blankTrade(d));
-    list.forEach((t, idx) => (html += rowHTML(t, d, i, list.length, d === today)));
+    list.forEach((t, idx) => (html += rowHTML(t, d, i, list.length, d === today, idx === list.length - 1)));
   });
   $("#journalBody").innerHTML = html;
   hydrateImages();
@@ -484,6 +484,7 @@ async function openHistory() {
   const modal = $("#historyModal");
   modal.hidden = false;
   $("#hStats").innerHTML = '<div class="h-stat"><span>Loading</span><b>...</b></div>';
+  $("#hStatsNet").textContent = "…";
 
   const cycle = activeCycle();
   const dates = dates30(cycle.startDate);
@@ -526,6 +527,10 @@ async function openHistory() {
     ["Trades / Days", trades + " / " + activeDays, ""],
     ["Avg Lot", lotN ? (lotSum / lotN).toFixed(2) : "0.00", "gold"],
   ].map(([l, v, c]) => `<div class="h-stat"><span>${l}</span><b class="${c}">${v}</b></div>`).join("");
+
+  const netChip = $("#hStatsNet");
+  netChip.textContent = money(net);
+  netChip.className = "hst-net" + (net > 0 ? " up" : net < 0 ? " down" : "");
 
   const withPl = dates.filter((d) => dayNets[d] !== 0);
   const maxAbs = Math.max(1, ...withPl.map((d) => Math.abs(dayNets[d])));
@@ -572,6 +577,27 @@ async function openHistory() {
 function bindChrome() {
   $("#userName").textContent = "@" + USER;
   $("#userAvatar").textContent = USER.charAt(0).toUpperCase();
+
+  const isDrawerOpen = () => document.body.classList.contains("drawer-open");
+  const setDrawer = (open) => {
+    document.body.classList.toggle("drawer-open", !!open);
+    $("#btnMenu").setAttribute("aria-expanded", open ? "true" : "false");
+  };
+  $("#btnMenu").addEventListener("click", () => setDrawer(!isDrawerOpen()));
+  $("#drawerMask").addEventListener("click", () => setDrawer(false));
+  $("#drawerClose").addEventListener("click", () => setDrawer(false));
+  $(".topbar-actions").addEventListener("click", (e) => {
+    if (e.target.closest(".btn, a")) setDrawer(false);
+  });
+  $("#cycleSelect").addEventListener("change", () => setDrawer(false));
+  window.addEventListener("resize", () => { if (window.innerWidth > 640) setDrawer(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setDrawer(false); });
+
+  const topbarEl = $(".topbar");
+  const syncTopbar = () => topbarEl.classList.toggle("is-scrolled", window.scrollY > 4);
+  window.addEventListener("scroll", syncTopbar, { passive: true });
+  syncTopbar();
+
   $("#btnLogout").addEventListener("click", async () => {
     clearTimeout(pushTimer);
     try { await pushState(); } catch (e) {}
@@ -635,6 +661,11 @@ function bindChrome() {
   $("#btnPrint").addEventListener("click", () => window.print());
 
   $("#btnHistory").addEventListener("click", () => openHistory());
+  $("#hStatsToggle").addEventListener("click", () => {
+    const drop = $("#hStatsDrop");
+    const open = drop.classList.toggle("open");
+    $("#hStatsToggle").setAttribute("aria-expanded", open ? "true" : "false");
+  });
   $("#hClose").addEventListener("click", closeHistory);
   $("#historyModal").addEventListener("click", (e) => { if (e.target.id === "historyModal") closeHistory(); });
 

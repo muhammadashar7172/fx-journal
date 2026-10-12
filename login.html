@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#080b10" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="FX Journal" />
+<meta name="application-name" content="FX Journal" />
+<title>Login — FX Journal</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="manifest" href="manifest.json" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Great+Vibes&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="login.css" />
+</head>
+<body class="auth-page">
+
+<div class="auth-wrap">
+  <aside class="auth-brand">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="4.5" y="8" width="5" height="8" rx="1"/>
+          <rect x="14.5" y="10" width="5" height="8" rx="1"/>
+          <path d="M7 4v4M7 16v4M17 4v6M17 18v2"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>FX Journal</h1>
+        <span>30 Day Trading Journey Journal</span>
+      </div>
+    </div>
+
+    <div class="auth-pitch">
+      <h2>FX Journal</h2>
+      <p class="auth-tag">30-Day Trading Journey Journal</p>
+    </div>
+  </aside>
+
+  <main class="auth-card">
+    <div class="auth-tabs">
+      <button type="button" class="tab active" data-tab="login">Login</button>
+      <button type="button" class="tab" data-tab="register">Register</button>
+    </div>
+
+    <form id="loginForm" class="auth-form" autocomplete="on">
+      <label class="f-label">Username</label>
+      <input class="f-input" id="loginUser" name="username" placeholder="aapka username" autocomplete="username" required />
+
+      <label class="f-label">Password</label>
+      <div class="f-pwd">
+        <input class="f-input" id="loginPass" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+        <button type="button" class="eye" data-eye="loginPass">&#128065;</button>
+      </div>
+
+      <p class="f-error" id="loginError" hidden></p>
+      <button class="btn btn-primary f-submit" type="submit">Login &amp; Open Journal</button>
+      <p class="f-hint">Session save rehta hai — dobara login karna nahi parega.</p>
+    </form>
+
+    <form id="regForm" class="auth-form" hidden autocomplete="off">
+      <label class="f-label">Username</label>
+      <input class="f-input" id="regUser" placeholder="naya username (3-20 chars)" autocomplete="off" required />
+
+      <label class="f-label">Password</label>
+      <div class="f-pwd">
+        <input class="f-input" id="regPass" type="password" placeholder="kam se kam 4 characters" autocomplete="new-password" required />
+        <button type="button" class="eye" data-eye="regPass">&#128065;</button>
+      </div>
+
+      <label class="f-label">Confirm Password</label>
+      <input class="f-input" id="regPass2" type="password" placeholder="dobara password" autocomplete="new-password" required />
+
+      <p class="f-error" id="regError" hidden></p>
+      <button class="btn btn-primary f-submit" type="submit">Create Account</button>
+      <p class="f-hint">Register karte hi pehle wala journal data bhi is account me shift ho jayega.</p>
+    </form>
+  </main>
+</div>
+
+<script src="auth.js"></script>
+<script src="login.js"></script>
+</body>
+</html>

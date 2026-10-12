@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#080b10" />
+<meta name="description" content="FX Journal — professional 30-day trading journal with before/after screenshots, lot size tracker and MongoDB Atlas backup." />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="FX Journal" />
+<meta name="application-name" content="FX Journal" />
+<title>FX Journal — Trading Journey Journal</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="manifest" href="manifest.json" />
+<link rel="shortcut icon" href="favicon.svg" /><link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Great+Vibes&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M7 4v4M7 16v4M7 8h0M17 4v6M17 18v2M17 10h0"/>
+        <rect x="4.5" y="8" width="5" height="8" rx="1"/>
+        <rect x="14.5" y="10" width="5" height="8" rx="1"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>FX Journal</h1>
+      <span>30 Day Trading Journey Journal</span>
+    </div>
+  </div>
+
+  <div class="topbar-actions">
+    <div class="cycle-picker">
+      <label for="cycleSelect">Cycle</label>
+      <select id="cycleSelect"></select>
+    </div>
+    <button class="btn btn-ghost" id="btnNewCycle" type="button">+ New Cycle</button>
+    <button class="btn btn-primary" id="btnPrint" type="button">Print / PDF</button>
+    <div class="user-chip">
+      <span class="avatar" id="userAvatar">U</span>
+      <span id="userName">@user</span>
+      <button class="btn btn-ghost" id="btnLogout" type="button">Logout</button>
+    </div>
+  </div>
+</header>
+
+<section class="stats" id="statsBar">
+  <div class="stat-card net">
+    <span class="stat-label">Net P/L</span>
+    <span class="stat-value" id="statNet">$0.00</span>
+    <span class="stat-sub" id="statProgress">Day 0 / 30</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Profit</span>
+    <span class="stat-value up" id="statProfit">$0.00</span>
+    <span class="stat-sub" id="statWins">0 wins</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Loss</span>
+    <span class="stat-value down" id="statLoss">$0.00</span>
+    <span class="stat-sub" id="statLosses">0 losses</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Win Rate</span>
+    <span class="stat-value" id="statWinRate">0%</span>
+    <span class="stat-sub" id="statTrades">0 trades logged</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Avg Lot Size</span>
+    <span class="stat-value gold" id="statLot">0.00</span>
+    <span class="stat-sub" id="statDays">0 days active</span>
+  </div>
+</section>
+
+<main class="sheet">
+  <div class="sheet-head">
+    <div>
+      <h2 id="cycleTitle">30 Day List</h2>
+      <p id="cycleRange">—</p>
+    </div>
+    <div>
+      <button class="btn btn-ghost" id="btnHistory" type="button">History</button>
+    </div>
+  </div>
+
+  <div class="table-scroll">
+    <table id="journalTable">
+      <thead>
+        <tr>
+          <th class="w-num">#</th>
+          <th class="w-date">Date</th>
+          <th class="w-day">Day</th>
+          <th class="w-pair">Pair</th>
+          <th class="w-side">Buy/Sell</th>
+          <th class="w-rr">Risk:Reward</th>
+          <th class="w-out">Outcome</th>
+          <th class="w-money">Profit</th>
+          <th class="w-money">Loss</th>
+          <th class="w-lot">Lot Size</th>
+          <th class="w-img">Before</th>
+          <th class="w-img">After</th>
+          <th class="w-act"></th>
+        </tr>
+      </thead>
+      <tbody id="journalBody"></tbody>
+    </table>
+  </div>
+
+  <div class="sheet-foot">
+    <span id="saveState">All changes saved locally</span>
+    <button class="btn btn-danger-ghost" id="btnClear" type="button">Clear This Cycle</button>
+  </div>
+</main>
+
+<footer class="page-foot">
+  <span class="credit">Created By <b>MR ASHAR</b></span>
+</footer>
+
+<div class="modal" id="historyModal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h3 id="hTitle">30-Day History</h3>
+        <p id="hRange">—</p>
+      </div>
+      <div class="lightbox-actions">
+        <button class="btn btn-danger-ghost" id="hClear" type="button">Clear This Cycle</button>
+        <button class="btn btn-primary" id="hClose" type="button">Close</button>
+      </div>
+    </div>
+    <div class="h-stats" id="hStats"></div>
+    <div class="h-bars" id="hBars"></div>
+    <div class="h-list" id="hList"></div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lightbox-inner">
+    <div class="lightbox-head">
+      <strong id="lbTitle">Image</strong>
+      <div class="lightbox-actions">
+        <button class="btn btn-ghost" id="lbReplace" type="button">Replace</button>
+        <button class="btn btn-ghost" id="lbDelete" type="button">Delete</button>
+        <button class="btn btn-primary" id="lbClose" type="button">Close</button>
+      </div>
+    </div>
+    <div class="lightbox-img">
+      <img id="lbImage" alt="" />
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<input type="file" id="imgPicker" accept="image/*" hidden />
+
+<script src="auth.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

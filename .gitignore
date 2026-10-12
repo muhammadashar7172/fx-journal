@@ -1,0 +1,10 @@
+node_modules/
+.env
+.vercel/
+mongo-data/
+*.log
+server.err.log
+server.log
+__iconshot.html
+__swcheck.html
+.DS_Store

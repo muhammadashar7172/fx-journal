@@ -266,6 +266,20 @@ $("#bell").addEventListener("click", () => {
   renderRows();
 });
 
+const isDrawerOpen = () => document.body.classList.contains("drawer-open");
+const setDrawer = (open) => {
+  document.body.classList.toggle("drawer-open", !!open);
+  $("#btnMenu").setAttribute("aria-expanded", open ? "true" : "false");
+};
+$("#btnMenu").addEventListener("click", () => setDrawer(!isDrawerOpen()));
+$("#drawerMask").addEventListener("click", () => setDrawer(false));
+$("#drawerClose").addEventListener("click", () => setDrawer(false));
+$(".topbar-actions").addEventListener("click", (e) => {
+  if (e.target.closest(".btn, a, .bell")) setDrawer(false);
+});
+window.addEventListener("resize", () => { if (window.innerWidth > 640) setDrawer(false); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") setDrawer(false); });
+
 $("#btnLogout").addEventListener("click", async () => {
   await apiLogout();
   location.href = "login.html";

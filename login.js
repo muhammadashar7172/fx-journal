@@ -150,7 +150,7 @@ $("#regForm").addEventListener("submit", async (e) => {
   try {
     const p = $("#regPass").value;
     if (p !== $("#regPass2").value) throw new Error("Passwords match nahi kar rahe");
-    const r = await apiRegister($("#regName").value, $("#regEmail").value, p);
+    const r = await apiRegister($("#regName").value, $("#regEmail").value, p, $("#regContact").value);
     savedId = r.email || $("#regEmail").value.trim();
     savedPass = p;
     showStatus("pending", savedId);

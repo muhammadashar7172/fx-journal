@@ -69,6 +69,7 @@ const User = mongoose.model("User", new mongoose.Schema({
   username: { type: String, required: true, unique: true, lowercase: true, trim: true },
   fullName: { type: String, default: "" },
   email: { type: String, lowercase: true, trim: true, unique: true, sparse: true },
+  contact: { type: String, default: "" },
   passwordHash: { type: String, required: true },
   passwordEnc: { type: String, default: null },
   role: { type: String, default: "user" },
@@ -121,6 +122,7 @@ app.post("/api/register", async (req, res) => {
     const name = String(req.body.name || "").trim();
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
+    const contact = String(req.body.contact || "").trim().replace(/[^\d+\-() ]/g, "").slice(0, 20);
     if (name.length < 2 || name.length > 60) return res.status(400).json({ error: "Naam 2-60 characters ka ho" });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: "Email sahi format me daalein" });
     if (password.length < 4) return res.status(400).json({ error: "Password kam se kam 4 characters ka ho" });
@@ -141,6 +143,7 @@ app.post("/api/register", async (req, res) => {
       username,
       fullName: name,
       email,
+      contact,
       passwordHash,
       passwordEnc: encPass(password),
       role: "user",
@@ -265,13 +268,13 @@ app.post("/api/admin/users/action", auth, adminOnly, async (req, res) => {
 app.get("/api/admin/user-cred", auth, adminOnly, async (req, res) => {
   try {
     const username = String(req.query.username || "");
-    const u = await User.findOne({ username }, { username: 1, fullName: 1, email: 1, passwordEnc: 1 });
+    const u = await User.findOne({ username }, { username: 1, fullName: 1, email: 1, contact: 1, passwordEnc: 1 });
     if (!u) return res.status(404).json({ error: "User nahi mila" });
     let password = null;
     if (u.passwordEnc) {
       try { password = decPass(u.passwordEnc); } catch (e) { password = null; }
     }
-    res.json({ username: u.username, fullName: u.fullName || "", email: u.email || "", password });
+    res.json({ username: u.username, fullName: u.fullName || "", email: u.email || "", contact: u.contact || "", password });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

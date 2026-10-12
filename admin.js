@@ -137,6 +137,7 @@ async function openCred(username) {
   $("#cdName").textContent = "Loading...";
   $("#cdUser").textContent = "—";
   $("#cdEmail").textContent = "—";
+  $("#cdContact").textContent = "—";
   $("#cdPass").textContent = "Loading...";
   $("#cdNewPass").value = "";
   $("#cdErr").hidden = true;
@@ -146,6 +147,7 @@ async function openCred(username) {
     $("#cdName").textContent = c.fullName || "—";
     $("#cdUser").textContent = c.username;
     $("#cdEmail").textContent = c.email || "—";
+    $("#cdContact").textContent = c.contact || "—";
     if (c.password) {
       $("#cdPass").textContent = "••••••••";
       $("#cdPass").dataset.real = c.password;

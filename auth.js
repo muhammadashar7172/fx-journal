@@ -28,13 +28,14 @@ async function apiMe() {
   return api("/api/me", undefined, "GET");
 }
 
-async function apiRegister(name, email, password) {
+async function apiRegister(name, email, password, contact) {
   name = String(name || "").trim();
   email = cleanUser(email);
+  contact = String(contact || "").trim().replace(/[^\d+\-() ]/g, "").slice(0, 20);
   if (name.length < 2) throw new Error("Apna poora naam daalein");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error("Email sahi format me daalein");
   if (String(password).length < 4) throw new Error("Password kam se kam 4 characters ka ho");
-  return api("/api/register", { name, email, password });
+  return api("/api/register", { name, email, password, contact });
 }
 
 async function apiLogin(u, p) {

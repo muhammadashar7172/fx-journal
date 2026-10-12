@@ -114,30 +114,6 @@ $("#stRefresh").addEventListener("click", async () => {
   }
 });
 
-let premTimer = null;
-function showPremToast() {
-  const t = $("#premToast");
-  t.classList.remove("pt-out");
-  t.hidden = false;
-  void t.offsetWidth;
-  const bar = t.querySelector(".pt-bar i");
-  if (bar) {
-    bar.style.animation = "none";
-    void bar.offsetWidth;
-    bar.style.animation = "";
-  }
-  clearTimeout(premTimer);
-  premTimer = setTimeout(hidePremToast, 7000);
-}
-function hidePremToast() {
-  const t = $("#premToast");
-  if (t.hidden) return;
-  clearTimeout(premTimer);
-  t.classList.add("pt-out");
-  setTimeout(() => { t.hidden = true; t.classList.remove("pt-out"); }, 380);
-}
-$("#ptClose").addEventListener("click", hidePremToast);
-
 $("#loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const err = $("#loginError");
@@ -177,7 +153,6 @@ $("#regForm").addEventListener("submit", async (e) => {
     const r = await apiRegister($("#regName").value, $("#regEmail").value, p);
     savedId = r.email || $("#regEmail").value.trim();
     savedPass = p;
-    showPremToast();
     showStatus("pending", savedId);
     premiumToast("Wait For Approval", "Account ban gaya — admin approve karega, tab tak login nahi milegi.", "&#9203;");
   } catch (ex) {

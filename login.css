@@ -1,4 +1,4 @@
-.auth-page{
+﻿.auth-page{
   display:grid;place-items:center;min-height:100vh;padding:26px;
   background:
     radial-gradient(1000px 520px at 12% -10%, rgba(59,130,246,.18), transparent 60%),
@@ -95,12 +95,12 @@
 .status-view.rejected .status-icon{background:rgba(148,163,184,.12);border-color:rgba(148,163,184,.4);color:#cbd5e1}
 .status-view.rejected h3{background:linear-gradient(90deg,#dbe6f2,#94a3b8);-webkit-background-clip:text;background-clip:text;color:transparent}
 
-/* ---------- Premium toast (Toastify style) ---------- */
+/* ---------- Premium toast (Toastify style, right side) ---------- */
 .pt-toast{
   position:fixed;top:22px;right:22px;z-index:300;min-width:320px;max-width:min(410px,92vw);
   background:linear-gradient(150deg,rgba(22,30,44,.97),rgba(11,16,25,.97));
   border:1px solid rgba(245,185,66,.45);border-radius:16px;padding:16px 18px 20px;
-  display:flex;gap:14px;align-items:flex-start;overflow:hidden;position:fixed;
+  display:flex;gap:14px;align-items:flex-start;overflow:hidden;
   box-shadow:0 26px 60px rgba(0,0,0,.6),0 0 44px rgba(245,185,66,.16),inset 0 1px 0 rgba(255,255,255,.06);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   transform:translateX(125%);opacity:0;transition:transform .55s cubic-bezier(.2,.85,.25,1.1),opacity .4s ease;
@@ -133,58 +133,3 @@
   .pt-toast{top:14px;right:14px;left:14px;min-width:0}
 }
 
-/* ---------- Premium "Wait For Approval" toast ---------- */
-.prem-toast{
-  position:fixed;top:22px;left:50%;transform:translate(-50%,-140%);z-index:300;
-  display:flex;align-items:center;gap:14px;min-width:min(430px,92vw);max-width:94vw;
-  padding:15px 18px 17px;border-radius:16px;overflow:hidden;
-  background:linear-gradient(150deg,rgba(24,32,48,.96),rgba(13,18,28,.96));
-  border:1px solid rgba(245,185,66,.45);
-  box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 44px rgba(245,185,66,.16),inset 0 1px 0 rgba(255,255,255,.06);
-  backdrop-filter:blur(14px);animation:ptIn .5s cubic-bezier(.2,.9,.25,1.25) forwards
-}
-.prem-toast[hidden]{display:none}
-@keyframes ptIn{
-  0%{transform:translate(-50%,-140%);opacity:0}
-  70%{transform:translate(-50%,8px);opacity:1}
-  100%{transform:translate(-50%,0);opacity:1}
-}
-.prem-toast.pt-out{animation:ptOut .4s ease forwards}
-@keyframes ptOut{to{transform:translate(-50%,-140%);opacity:0}}
-.pt-shine{
-  position:absolute;top:0;left:-60%;width:45%;height:100%;pointer-events:none;
-  background:linear-gradient(105deg,transparent,rgba(255,255,255,.14),transparent);
-  animation:ptShine 2.6s .5s ease infinite
-}
-@keyframes ptShine{0%{left:-60%}55%,100%{left:130%}}
-.pt-icon{
-  flex:0 0 auto;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:22px;
-  background:linear-gradient(145deg,rgba(245,185,66,.2),rgba(245,185,66,.06));
-  border:1px solid rgba(245,185,66,.45);color:#ffd88a;
-  box-shadow:0 0 24px rgba(245,185,66,.32);animation:ptPulse 1.6s ease infinite
-}
-@keyframes ptPulse{0%,100%{box-shadow:0 0 18px rgba(245,185,66,.24)}50%{box-shadow:0 0 34px rgba(245,185,66,.5)}}
-.pt-body{display:flex;flex-direction:column;gap:3px;min-width:0}
-.pt-body b{
-  font-size:15.5px;font-weight:800;letter-spacing:.3px;
-  background:linear-gradient(90deg,#ffd166,#f5b942,#ffe9b8);
-  -webkit-background-clip:text;background-clip:text;color:transparent
-}
-.pt-body span{font-size:12.5px;color:#a9bacd;line-height:1.45}
-.pt-close{
-  margin-left:auto;background:transparent;border:0;color:#7b8ea3;font-size:21px;line-height:1;
-  cursor:pointer;padding:4px 6px;border-radius:8px;transition:.15s;flex:0 0 auto
-}
-.pt-close:hover{color:#fff;background:rgba(255,255,255,.08)}
-.pt-bar{position:absolute;left:0;bottom:0;width:100%;height:3px;background:rgba(255,255,255,.07)}
-.pt-bar i{
-  display:block;height:100%;width:100%;
-  background:linear-gradient(90deg,#f5b942,#ffd166,#f5b942);
-  transform-origin:left;animation:ptBar 7s linear forwards
-}
-@keyframes ptBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-@media (max-width:480px){
-  .prem-toast{top:12px;padding:13px 14px 15px}
-  .pt-icon{width:40px;height:40px;font-size:19px}
-  .pt-body b{font-size:14.5px}
-}

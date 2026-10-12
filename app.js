@@ -676,8 +676,12 @@ function bindChrome() {
 
 async function boot() {
   try {
-    const me = await apiMe();
-    USER = me.username;
+  const me = await apiMe();
+  USER = me.username;
+  if (me.role === "admin") {
+    const b = $("#btnAdmin");
+    if (b) b.hidden = false;
+  }
   } catch (e) {
     location.replace("login.html");
     return;

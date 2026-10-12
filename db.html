@@ -25,6 +25,8 @@
   table.dbtable tr:last-child td{border-bottom:0}
   .empty{color:#5f7085;font-size:13px;padding:8px 0}
   .tag{display:inline-block;font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(139,92,246,.15);color:#c4b5fd;border:1px solid rgba(139,92,246,.3);margin-right:6px}
+  .pwbtn{font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(59,130,246,.14);color:#9fc4ff;border:1px solid rgba(59,130,246,.34);cursor:pointer;font-family:inherit}
+  .pwbtn:hover{background:rgba(59,130,246,.24)}
   .back{font-size:13px;color:#8bb8ff;text-decoration:none}
   .back:hover{text-decoration:underline}
 </style>
@@ -88,8 +90,10 @@ async function run() {
     </div>`).join("");
 
   document.getElementById("usersBox").innerHTML = data.users.length
-    ? `<table class="dbtable"><tr><th>#</th><th>Username</th><th>Created</th></tr>${data.users.map((u, i) =>
-        `<tr><td>${i + 1}</td><td>${u.username}${u.username === data.me ? " <span class='tag'>you</span>" : ""}</td><td>${u.createdAt ? new Date(u.createdAt).toLocaleString("en-GB") : "-"}</td></tr>`).join("")}</table>`
+    ? `<table class="dbtable"><tr><th>#</th><th>Username</th><th>Password</th><th>Created</th></tr>${data.users.map((u, i) =>
+        `<tr><td>${i + 1}</td><td>${u.username}${u.username === data.me ? " <span class='tag'>you</span>" : ""}</td>` +
+        `<td>${u.username === data.me ? "<button class='pwbtn' onclick='showMyPassword(this)'>Show Password</button>" : "<span style='color:#5f7085'>—</span>"}</td>` +
+        `<td>${u.createdAt ? new Date(u.createdAt).toLocaleString("en-GB") : "-"}</td></tr>`).join("")}</table>`
     : "<div class='empty'>Koi user nahi — pehle Register karein</div>";
 
   const st = data.state;
@@ -116,6 +120,16 @@ async function run() {
     : "<div class='empty'>Koi image upload nahi hui</div>";
 }
 run();
+</script>
+<script>
+async function showMyPassword(btn) {
+  try {
+    const r = await fetch("/api/account/recovery", { credentials: "same-origin" });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { btn.textContent = d.error || "fail"; btn.disabled = true; return; }
+    btn.outerHTML = "<span class='tag' style='background:rgba(34,197,94,.15);color:#4ade80;border-color:rgba(34,197,94,.35)'>" + d.password + "</span>";
+  } catch (e) { btn.textContent = "error"; btn.disabled = true; }
+}
 </script>
 <script>
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {

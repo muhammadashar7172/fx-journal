@@ -11,7 +11,12 @@ async function api(path, body, method) {
   });
   let data = null;
   try { data = await res.json(); } catch (e) {}
-  if (!res.ok) throw new Error((data && data.error) || "Request failed (" + res.status + ")");
+  if (!res.ok) {
+    const err = new Error((data && data.error) || "Request failed (" + res.status + ")");
+    err.http = res.status;
+    err.data = data || {};
+    throw err;
+  }
   return data;
 }
 
@@ -23,19 +28,31 @@ async function apiMe() {
   return api("/api/me", undefined, "GET");
 }
 
-async function apiRegister(u, p) {
-  u = cleanUser(u);
-  if (!/^[a-z0-9_.-]{3,20}$/i.test(u)) throw new Error("Username 3-20 characters rakhein (a-z, 0-9, . _ -)");
-  if (String(p).length < 4) throw new Error("Password kam se kam 4 characters ka ho");
-  const r = await api("/api/register", { username: u, password: p });
-  return r.username;
+async function apiRegister(name, email, password) {
+  name = String(name || "").trim();
+  email = cleanUser(email);
+  if (name.length < 2) throw new Error("Apna poora naam daalein");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new Error("Email sahi format me daalein");
+  if (String(password).length < 4) throw new Error("Password kam se kam 4 characters ka ho");
+  return api("/api/register", { name, email, password });
 }
 
 async function apiLogin(u, p) {
-  u = cleanUser(u);
-  if (!u || !p) throw new Error("Username aur password dono bharein");
-  const r = await api("/api/login", { username: u, password: p });
-  return r.username;
+  u = String(u || "").trim();
+  if (!u || !p) throw new Error("Email/username aur password dono bharein");
+  return api("/api/login", { username: u, password: p });
+}
+
+async function apiCheckStatus(u) {
+  return api("/api/check-status", { username: String(u || "").trim() });
+}
+
+async function apiAdminUsers() {
+  return api("/api/admin/users", undefined, "GET");
+}
+
+async function apiAdminAction(username, action) {
+  return api("/api/admin/users/action", { username, action });
 }
 
 async function apiLogout() {

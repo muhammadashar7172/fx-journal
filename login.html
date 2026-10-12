@@ -48,8 +48,8 @@
     </div>
 
     <form id="loginForm" class="auth-form" autocomplete="on">
-      <label class="f-label">Username</label>
-      <input class="f-input" id="loginUser" name="username" placeholder="aapka username" autocomplete="username" required />
+      <label class="f-label">Email ya Username</label>
+      <input class="f-input" id="loginUser" name="username" placeholder="email ya username" autocomplete="username" required />
 
       <label class="f-label">Password</label>
       <div class="f-pwd">
@@ -63,8 +63,11 @@
     </form>
 
     <form id="regForm" class="auth-form" hidden autocomplete="off">
-      <label class="f-label">Username</label>
-      <input class="f-input" id="regUser" placeholder="naya username (3-20 chars)" autocomplete="off" required />
+      <label class="f-label">Full Name</label>
+      <input class="f-input" id="regName" placeholder="aapka poora naam" autocomplete="name" required />
+
+      <label class="f-label">Email</label>
+      <input class="f-input" id="regEmail" type="email" placeholder="aapka@email.com" autocomplete="email" required />
 
       <label class="f-label">Password</label>
       <div class="f-pwd">
@@ -77,8 +80,20 @@
 
       <p class="f-error" id="regError" hidden></p>
       <button class="btn btn-primary f-submit" type="submit">Create Account</button>
-      <p class="f-hint">Register karte hi pehle wala journal data bhi is account me shift ho jayega.</p>
+      <p class="f-hint">Register karte hi account <b>Pending</b> hota hai — admin approve kare tab tak login nahi milegi.</p>
     </form>
+
+    <div id="statusView" class="status-view" hidden>
+      <div class="status-icon" id="stIcon">&#9203;</div>
+      <h3 id="stTitle">Pending Approval</h3>
+      <p id="stMsg">Aapka account admin approval ka muntazir hai.</p>
+      <p class="status-account" id="stAccount"></p>
+      <div class="status-actions">
+        <button type="button" class="btn btn-primary" id="stRefresh">Status Check Karein</button>
+        <button type="button" class="btn btn-ghost" id="stBack">Login Page</button>
+      </div>
+      <p class="status-note" id="stNote">Admin approve karte hi yahan wapas login kar sakte hain.</p>
+    </div>
   </main>
 </div>
 

@@ -2,6 +2,8 @@ function $(s, r = document) { return (r || document).querySelector(s); }
 function $$(s, r = document) { return Array.from((r || document).querySelectorAll(s)); }
 
 const tabs = $$(".tab");
+let savedId = "";
+let savedPass = "";
 
 function showErr(el, msg) {
   el.textContent = msg;
@@ -30,7 +32,65 @@ $$(".eye").forEach((b) =>
   })
 );
 
-apiMe().then(() => location.replace("index.html")).catch(() => {});
+apiMe().then((me) => {
+  if (me.role === "admin") location.replace("admin.html");
+  else location.replace("index.html");
+}).catch(() => {});
+
+const STATUS_UI = {
+  pending: { icon: "&#9203;", title: "Pending Approval", note: "Admin approve karte hi yahan wapas login kar sakte hain." },
+  blocked: { icon: "&#128683;", title: "Account Blocked", note: "Details ke liye admin se rabta karein." },
+  rejected: { icon: "&#10060;", title: "Account Rejected", note: "Naya account banane se pehle admin se baat karein." },
+};
+
+function showStatus(status, id) {
+  const view = $("#statusView");
+  const ui = STATUS_UI[status] || STATUS_UI.pending;
+  view.className = "status-view " + status;
+  $("#stIcon").innerHTML = ui.icon;
+  $("#stTitle").textContent = ui.title;
+  $("#stMsg").textContent = status === "pending"
+    ? "Aapka account admin approval ka muntazir hai. Aap approval se pehle login nahi kar sakte."
+    : (status === "blocked"
+      ? "Aapka account admin ne block kar diya hai — login band hai."
+      : "Aapka account approve nahi hua hai.");
+  $("#stAccount").textContent = id || "";
+  $("#stNote").textContent = ui.note;
+  $("#loginForm").hidden = true;
+  $("#regForm").hidden = true;
+  $$(".tab").forEach((t) => (t.hidden = true));
+  $(".auth-tabs").hidden = true;
+  view.hidden = false;
+}
+
+function backToForms() {
+  $("#statusView").hidden = true;
+  $(".auth-tabs").hidden = false;
+  $$(".tab").forEach((t) => (t.hidden = false));
+  switchTab("login");
+}
+
+$("#stBack").addEventListener("click", backToForms);
+
+$("#stRefresh").addEventListener("click", async () => {
+  const btn = $("#stRefresh");
+  btn.classList.add("f-loading");
+  try {
+    const r = await apiCheckStatus(savedId || $("#stAccount").textContent);
+    if (r.status === "approved") {
+      const user = await apiLogin(savedId, savedPass);
+      await claimLegacyData(user.username);
+      location.href = user.role === "admin" ? "admin.html" : "index.html";
+      return;
+    }
+    if (r.status !== "unknown") showStatus(r.status, savedId);
+    else showErr($("#loginError"), "Account nahi mila");
+  } catch (ex) {
+    if (ex.http === 403 && ex.data && ex.data.status) showStatus(ex.data.status, savedId);
+  } finally {
+    btn.classList.remove("f-loading");
+  }
+});
 
 $("#loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -38,12 +98,18 @@ $("#loginForm").addEventListener("submit", async (e) => {
   clearErr(err);
   const btn = e.target.querySelector(".f-submit");
   btn.classList.add("f-loading");
+  savedId = $("#loginUser").value.trim();
+  savedPass = $("#loginPass").value;
   try {
-    const user = await apiLogin($("#loginUser").value, $("#loginPass").value);
-    await claimLegacyData(user);
-    location.href = "index.html";
+    const user = await apiLogin(savedId, savedPass);
+    await claimLegacyData(user.username);
+    location.href = user.role === "admin" ? "admin.html" : "index.html";
   } catch (ex) {
-    showErr(err, ex.message || "Login fail hua");
+    if (ex.http === 403 && ex.data && ex.data.status) {
+      showStatus(ex.data.status, savedId);
+    } else {
+      showErr(err, ex.message || "Login fail hua");
+    }
     btn.classList.remove("f-loading");
   }
 });
@@ -57,11 +123,13 @@ $("#regForm").addEventListener("submit", async (e) => {
   try {
     const p = $("#regPass").value;
     if (p !== $("#regPass2").value) throw new Error("Passwords match nahi kar rahe");
-    const user = await apiRegister($("#regUser").value, p);
-    await claimLegacyData(user);
-    location.href = "index.html";
+    const r = await apiRegister($("#regName").value, $("#regEmail").value, p);
+    savedId = r.email || $("#regEmail").value.trim();
+    savedPass = p;
+    showStatus("pending", savedId);
   } catch (ex) {
     showErr(err, ex.message || "Register fail hua");
+  } finally {
     btn.classList.remove("f-loading");
   }
 });

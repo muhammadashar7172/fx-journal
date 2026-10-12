@@ -101,3 +101,41 @@
   .acts{justify-content:flex-start}
   .bell{width:38px;height:38px}
 }
+
+/* ---------- Credentials box ---------- */
+.act-cred{background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.34);color:#c4b5fd}
+.cred-card{width:min(640px,100%)}
+.cred-body{padding:20px}
+.cred-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cred-field{
+  background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+  border:1px solid var(--line);border-radius:12px;padding:13px 15px;min-width:0
+}
+.cred-field label{
+  display:block;font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;
+  color:#8797a9;font-weight:700;margin-bottom:7px
+}
+.cred-val{font-size:14.5px;color:#e6edf5;font-weight:600;word-break:break-all;min-height:20px}
+.cred-val.mono{font-family:"JetBrains Mono",monospace;font-size:13.5px;font-weight:500}
+.cred-pass{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cd-eye{background:transparent;border:0;cursor:pointer;font-size:15px;opacity:.6;padding:2px 4px;line-height:1}
+.cd-eye:hover{opacity:1}
+.cred-change{margin-top:16px;border-top:1px dashed var(--line);padding-top:16px}
+.cred-change label{
+  display:block;font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;
+  color:#8797a9;font-weight:700;margin-bottom:8px
+}
+.cred-change-row{display:flex;gap:9px}
+.f-input{
+  flex:1;min-width:0;background:rgba(255,255,255,.03);border:1px solid #22303f;border-radius:11px;
+  color:var(--text);font-family:inherit;font-size:14px;padding:11px 13px;outline:none;transition:.16s
+}
+.f-input::placeholder{color:#4e5f72}
+.f-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+.cred-note{margin:10px 0 0;font-size:11.5px;color:#66788d;line-height:1.5}
+.f-loading{opacity:.6;pointer-events:none}
+
+@media (max-width:640px){
+  .cred-grid{grid-template-columns:1fr}
+  .cred-change-row{flex-direction:column}
+}

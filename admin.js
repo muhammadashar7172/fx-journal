@@ -54,6 +54,7 @@ function renderRows() {
       const isSelf = u.username === ME;
       const pending = st === "pending";
       const acts = [];
+      acts.push('<button class="act act-cred" data-act="cred" data-u="' + esc(u.username) + '">Credentials</button>');
       if (pending) {
         acts.push('<button class="act act-approve" data-act="approve" data-u="' + esc(u.username) + '">Approve</button>');
         acts.push('<button class="act act-reject" data-act="reject" data-u="' + esc(u.username) + '">Reject</button>');
@@ -117,6 +118,86 @@ async function load(announceNew) {
 }
 
 let confirmCb = null;
+
+/* ---------- Credentials box ---------- */
+let credUser = "";
+
+function closeCred() {
+  $("#credModal").hidden = true;
+  credUser = "";
+  $("#cdNewPass").value = "";
+  $("#cdErr").hidden = true;
+  $("#cdPass").textContent = "••••••••";
+  $("#cdPass").dataset.real = "";
+}
+
+async function openCred(username) {
+  credUser = username;
+  $("#cdSub").textContent = "@" + username;
+  $("#cdName").textContent = "Loading...";
+  $("#cdUser").textContent = "—";
+  $("#cdEmail").textContent = "—";
+  $("#cdPass").textContent = "Loading...";
+  $("#cdNewPass").value = "";
+  $("#cdErr").hidden = true;
+  $("#credModal").hidden = false;
+  try {
+    const c = await apiAdminCred(username);
+    $("#cdName").textContent = c.fullName || "—";
+    $("#cdUser").textContent = c.username;
+    $("#cdEmail").textContent = c.email || "—";
+    if (c.password) {
+      $("#cdPass").textContent = "••••••••";
+      $("#cdPass").dataset.real = c.password;
+    } else {
+      $("#cdPass").textContent = "not saved — login karte hi save hoga";
+      $("#cdPass").dataset.real = "";
+    }
+  } catch (e) {
+    $("#cdName").textContent = "Fail: " + e.message;
+  }
+}
+
+$("#cdClose").addEventListener("click", closeCred);
+$("#credModal").addEventListener("click", (e) => { if (e.target.id === "credModal") closeCred(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#credModal").hidden) closeCred(); });
+
+$("#cdEye").addEventListener("click", () => {
+  const el = $("#cdPass");
+  const real = el.dataset.real || "";
+  if (!real) return;
+  const hidden = el.textContent === "••••••••" || el.textContent === "";
+  el.textContent = hidden ? real : "••••••••";
+});
+
+$("#cdSave").addEventListener("click", async () => {
+  const err = $("#cdErr");
+  err.hidden = true;
+  const pass = $("#cdNewPass").value;
+  if (!credUser) return;
+  if (pass.length < 4) {
+    err.textContent = "Password kam se kam 4 characters ka ho";
+    err.hidden = false;
+    return;
+  }
+  const btn = $("#cdSave");
+  btn.classList.add("f-loading");
+  try {
+    await apiAdminSetPassword(credUser, pass);
+    toast("Password change ho gaya: @" + credUser);
+    $("#cdNewPass").value = "";
+    $("#cdPass").textContent = "••••••••";
+    $("#cdPass").dataset.real = pass;
+    const row = USERS.find((u) => u.username === credUser);
+    if (row) row.passwordChanged = true;
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.hidden = false;
+  } finally {
+    btn.classList.remove("f-loading");
+  }
+});
+
 function confirmAction(title, sub, body, cb) {
   $("#cfTitle").textContent = title;
   $("#cfSub").textContent = sub;
@@ -138,6 +219,12 @@ $("#userRows").addEventListener("click", async (e) => {
   if (!btn) return;
   const action = btn.dataset.act;
   const username = btn.dataset.u;
+
+  if (action === "cred") {
+    openCred(username);
+    return;
+  }
+
   if (action === "delete") {
     confirmAction(
       "Delete User",

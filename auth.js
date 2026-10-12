@@ -55,6 +55,14 @@ async function apiAdminAction(username, action) {
   return api("/api/admin/users/action", { username, action });
 }
 
+async function apiAdminCred(username) {
+  return api("/api/admin/user-cred?username=" + encodeURIComponent(username), undefined, "GET");
+}
+
+async function apiAdminSetPassword(username, password) {
+  return api("/api/admin/user-password", { username, password });
+}
+
 async function apiLogout() {
   try { await api("/api/logout", {}); } catch (e) {}
 }

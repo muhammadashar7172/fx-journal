@@ -138,6 +138,53 @@
   </div>
 </div>
 
+<div class="modal" id="credModal" hidden>
+  <div class="modal-card cred-card">
+    <div class="modal-head">
+      <div>
+        <h3>User Credentials</h3>
+        <p id="cdSub">—</p>
+      </div>
+      <div class="lightbox-actions">
+        <button class="btn btn-ghost" id="cdClose" type="button">Close</button>
+      </div>
+    </div>
+    <div class="cred-body">
+      <div class="cred-grid">
+        <div class="cred-field">
+          <label>Full Name</label>
+          <div class="cred-val" id="cdName">—</div>
+        </div>
+        <div class="cred-field">
+          <label>Username</label>
+          <div class="cred-val mono" id="cdUser">—</div>
+        </div>
+        <div class="cred-field">
+          <label>Email</label>
+          <div class="cred-val" id="cdEmail">—</div>
+        </div>
+        <div class="cred-field">
+          <label>Password</label>
+          <div class="cred-val mono cred-pass">
+            <span id="cdPass">••••••••</span>
+            <button class="cd-eye" id="cdEye" type="button" title="Show / hide">&#128065;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cred-change">
+        <label for="cdNewPass">Change Password</label>
+        <div class="cred-change-row">
+          <input class="f-input" id="cdNewPass" type="password" placeholder="naya password (min 4 characters)" autocomplete="new-password" />
+          <button class="btn btn-primary" id="cdSave" type="button">Save Password</button>
+        </div>
+        <p class="f-error" id="cdErr" hidden></p>
+        <p class="cred-note">Save karte hi user ka purana password band ho jayega — wo naye password se login karega.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" hidden></div>
 
 <script src="auth.js"></script>

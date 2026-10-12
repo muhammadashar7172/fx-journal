@@ -70,6 +70,7 @@ const User = mongoose.model("User", new mongoose.Schema({
   fullName: { type: String, default: "" },
   email: { type: String, lowercase: true, trim: true, unique: true, sparse: true },
   passwordHash: { type: String, required: true },
+  passwordEnc: { type: String, default: null },
   role: { type: String, default: "user" },
   status: { type: String, default: "pending" },
   createdAt: { type: Date, default: Date.now },
@@ -256,6 +257,39 @@ app.post("/api/admin/users/action", auth, adminOnly, async (req, res) => {
     user.status = ADMIN_ACTIONS[action];
     await user.save();
     res.json({ ok: true, action, username: target, status: user.status });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/admin/user-cred", auth, adminOnly, async (req, res) => {
+  try {
+    const username = String(req.query.username || "");
+    const u = await User.findOne({ username }, { username: 1, fullName: 1, email: 1, passwordEnc: 1 });
+    if (!u) return res.status(404).json({ error: "User nahi mila" });
+    let password = null;
+    if (u.passwordEnc) {
+      try { password = decPass(u.passwordEnc); } catch (e) { password = null; }
+    }
+    res.json({ username: u.username, fullName: u.fullName || "", email: u.email || "", password });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/admin/user-password", auth, adminOnly, async (req, res) => {
+  try {
+    const username = String(req.body.username || "");
+    const password = String(req.body.password || "");
+    if (!username) return res.status(400).json({ error: "Username chahiye" });
+    if (password.length < 4) return res.status(400).json({ error: "Password kam se kam 4 characters ka ho" });
+    if (password.length > 72) return res.status(400).json({ error: "Password 72 characters se chhota rakhein" });
+    const u = await User.findOne({ username });
+    if (!u) return res.status(404).json({ error: "User nahi mila" });
+    u.passwordHash = await bcrypt.hash(password, 10);
+    u.passwordEnc = encPass(password);
+    await u.save();
+    res.json({ ok: true, username });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

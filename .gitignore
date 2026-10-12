@@ -8,3 +8,6 @@ server.log
 __iconshot.html
 __swcheck.html
 .DS_Store
+
+.vercel
+.env*

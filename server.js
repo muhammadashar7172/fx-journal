@@ -29,6 +29,26 @@ const app = express();
 app.use(express.json({ limit: "40mb" }));
 app.use(cookieParser());
 
+let dbPromise = null;
+function ensureDb() {
+  if (!dbPromise) {
+    dbPromise = connectDB().catch((e) => {
+      dbPromise = null;
+      throw e;
+    });
+  }
+  return dbPromise;
+}
+
+app.use("/api", async (req, res, next) => {
+  try {
+    await ensureDb();
+    next();
+  } catch (e) {
+    res.status(503).json({ error: "Database unavailable: " + e.message });
+  }
+});
+
 const User = mongoose.model("User", new mongoose.Schema({
   username: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true },
@@ -216,26 +236,6 @@ app.use(async (req, res, next) => {
 });
 
 app.use(express.static(__dirname, { dotfiles: "deny", index: "index.html" }));
-
-let dbPromise = null;
-function ensureDb() {
-  if (!dbPromise) {
-    dbPromise = connectDB().catch((e) => {
-      dbPromise = null;
-      throw e;
-    });
-  }
-  return dbPromise;
-}
-
-app.use("/api", async (req, res, next) => {
-  try {
-    await ensureDb();
-    next();
-  } catch (e) {
-    res.status(503).json({ error: "Database unavailable: " + e.message });
-  }
-});
 
 async function connectDB() {
   const isCloud = !!process.env.VERCEL;

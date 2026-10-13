@@ -181,6 +181,19 @@ input.field.mono{font-family:"JetBrains Mono",monospace;text-align:right}
 input.field.money-up{border-color:rgba(34,197,94,.45);background:rgba(34,197,94,.07);color:#86efac}
 input.field.money-down{border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.07);color:#fca5a5}
 
+.money-box{position:relative}
+.money-box .money-sign{
+  position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  font-size:12px;font-weight:700;color:#5b6f85;pointer-events:none;z-index:1;
+  font-family:"JetBrains Mono",monospace
+}
+.money-box .field{padding-left:21px}
+.money-box input[type=number]::-webkit-inner-spin-button,
+.money-box input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.money-box input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.money-box .money-sign.up{color:#86efac}
+.money-box .money-sign.down{color:#fca5a5}
+
 .lot-box{position:relative}
 .lot-box .field{
   background:linear-gradient(180deg,rgba(245,185,66,.13),rgba(245,185,66,.05));

@@ -286,10 +286,16 @@ function rowHTML(t, date, index, total, isToday, isLast) {
       <select class="field" data-k="outcome" data-id="${t.id}" data-live="1">${opts}</select>
     </td>
     <td>
-      <input class="field mono ${t.profit ? "money-up" : ""}" type="number" step="0.01" data-k="profit" data-id="${t.id}" value="${esc(t.profit)}" placeholder="0.00" />
+      <div class="money-box">
+        <span class="money-sign ${t.profit ? "up" : ""}">$</span>
+        <input class="field mono ${t.profit ? "money-up" : ""}" type="number" step="0.01" data-k="profit" data-id="${t.id}" value="${esc(t.profit)}" placeholder="0.00" />
+      </div>
     </td>
     <td>
-      <input class="field mono ${t.loss ? "money-down" : ""}" type="number" step="0.01" data-k="loss" data-id="${t.id}" value="${esc(t.loss)}" placeholder="0.00" />
+      <div class="money-box">
+        <span class="money-sign ${t.loss ? "down" : ""}">$</span>
+        <input class="field mono ${t.loss ? "money-down" : ""}" type="number" step="0.01" data-k="loss" data-id="${t.id}" value="${esc(t.loss)}" placeholder="0.00" />
+      </div>
     </td>
     <td>
       <div class="lot-box">
@@ -369,6 +375,9 @@ function updateRowLook(id) {
   const l = tr.querySelector('[data-k="loss"]');
   p.classList.toggle("money-up", !!p.value);
   l.classList.toggle("money-down", !!l.value);
+  const signs = tr.querySelectorAll(".money-box .money-sign");
+  if (signs[0]) signs[0].classList.toggle("up", !!p.value);
+  if (signs[1]) signs[1].classList.toggle("down", !!l.value);
 }
 
 function bindTable() {

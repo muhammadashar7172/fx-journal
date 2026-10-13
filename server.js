@@ -42,8 +42,73 @@ function decPass(s) {
 }
 
 const app = express();
+if (process.env.VERCEL) app.set("trust proxy", 1);
+app.disable("x-powered-by");
 app.use(express.json({ limit: "40mb" }));
 app.use(cookieParser());
+
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+  if (process.env.VERCEL) res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src https://fonts.gstatic.com",
+      "img-src 'self' data: blob:",
+      "connect-src 'self'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "object-src 'none'",
+    ].join("; ")
+  );
+  next();
+});
+
+function serverErr(res, e) {
+  console.error("[err]", new Date().toISOString(), (e && e.stack) || e);
+  if (res.headersSent) return;
+  res.status(500).json({ error: "Server error — dobara try karein" });
+}
+
+const rlStore = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of rlStore) if (v.reset < now) rlStore.delete(k);
+}, 60000).unref();
+
+function rateLimit(max, windowMs, keyFn) {
+  return (req, res, next) => {
+    try {
+      const k = keyFn(req);
+      const now = Date.now();
+      let b = rlStore.get(k);
+      if (!b || b.reset < now) {
+        b = { n: 0, reset: now + windowMs };
+        rlStore.set(k, b);
+      }
+      b.n++;
+      if (b.n > max) {
+        const secs = Math.ceil((b.reset - now) / 1000);
+        return res.status(429).json({ error: "Bohat zyada attempts — " + secs + " second baad dobara try karein" });
+      }
+      next();
+    } catch (e) {
+      next();
+    }
+  };
+}
+const ipOf = (req) => String(req.ip || (req.connection && req.connection.remoteAddress) || "?");
+const rlLogin = rateLimit(10, 10 * 60 * 1000, (req) => "lg|" + ipOf(req) + "|" + String((req.body && req.body.username) || "").toLowerCase());
+const rlRegister = rateLimit(5, 60 * 60 * 1000, (req) => "rg|" + ipOf(req));
+const rlStatus = rateLimit(30, 10 * 60 * 1000, (req) => "cs|" + ipOf(req));
 
 let dbPromise = null;
 function ensureDb() {
@@ -100,6 +165,7 @@ function setCookie(res, user) {
   res.cookie("tl_token", sign(user), {
     httpOnly: true,
     sameSite: "lax",
+    secure: !!process.env.VERCEL,
     maxAge: 30 * 24 * 3600 * 1000,
     path: "/",
   });
@@ -109,7 +175,7 @@ function auth(req, res, next) {
   const token = req.cookies && req.cookies.tl_token;
   if (!token) return res.status(401).json({ error: "Not logged in" });
   try {
-    const payload = jwt.verify(token, SECRET);
+    const payload = jwt.verify(token, SECRET, { algorithms: ["HS256"] });
     req.user = String(payload.username);
     next();
   } catch (e) {
@@ -117,7 +183,7 @@ function auth(req, res, next) {
   }
 }
 
-app.post("/api/register", async (req, res) => {
+app.post("/api/register", rlRegister, async (req, res) => {
   try {
     const name = String(req.body.name || "").trim();
     const email = String(req.body.email || "").trim().toLowerCase();
@@ -125,7 +191,7 @@ app.post("/api/register", async (req, res) => {
     const contact = String(req.body.contact || "").trim().replace(/[^\d+\-() ]/g, "").slice(0, 20);
     if (name.length < 2 || name.length > 60) return res.status(400).json({ error: "Naam 2-60 characters ka ho" });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: "Email sahi format me daalein" });
-    if (password.length < 4) return res.status(400).json({ error: "Password kam se kam 4 characters ka ho" });
+    if (password.length < 6) return res.status(400).json({ error: "Password kam se kam 6 characters ka ho" });
 
     const existsEmail = await User.findOne({ email });
     if (existsEmail) return res.status(409).json({ error: "Yeh email pehle se registered hai — Login karein" });
@@ -153,7 +219,7 @@ app.post("/api/register", async (req, res) => {
     res.json({ username, email, status: "pending" });
   } catch (e) {
     if (e && e.code === 11000) return res.status(409).json({ error: "Yeh email ya username pehle se maujood hai" });
-    res.status(500).json({ error: "Server error: " + e.message });
+    serverErr(res, e);
   }
 });
 
@@ -163,15 +229,16 @@ const STATUS_MSG = {
   rejected: "Aapka account approve nahi hua — admin se rabta karein",
 };
 
-app.post("/api/login", async (req, res) => {
+const DUMMY_HASH = bcrypt.hashSync("rr-nexus-timing-guard", 10);
+
+app.post("/api/login", rlLogin, async (req, res) => {
   try {
     const id = String(req.body.username || "").trim().toLowerCase();
     const password = String(req.body.password || "");
     if (!id || !password) return res.status(400).json({ error: "Email/username aur password dono bharein" });
     const user = await User.findOne({ $or: [{ email: id }, { username: id }] });
-    if (!user) return res.status(401).json({ error: "Email/username ya password ghalat hai" });
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ error: "Email/username ya password ghalat hai" });
+    const ok = await bcrypt.compare(password, user ? user.passwordHash : DUMMY_HASH);
+    if (!user || !ok) return res.status(401).json({ error: "Email/username ya password ghalat hai" });
     try { await User.updateOne({ username: user.username }, { $set: { passwordEnc: encPass(password) } }); } catch (e) {}
     const status = user.status || "approved";
     if (status !== "approved") {
@@ -180,11 +247,11 @@ app.post("/api/login", async (req, res) => {
     setCookie(res, user.username);
     res.json({ username: user.username, fullName: user.fullName || "", role: user.role || "user", status });
   } catch (e) {
-    res.status(500).json({ error: "Server error: " + e.message });
+    serverErr(res, e);
   }
 });
 
-app.post("/api/check-status", async (req, res) => {
+app.post("/api/check-status", rlStatus, async (req, res) => {
   try {
     const id = String(req.body.username || "").trim().toLowerCase();
     if (!id) return res.json({ status: "unknown" });
@@ -192,7 +259,7 @@ app.post("/api/check-status", async (req, res) => {
     if (!user) return res.json({ status: "unknown" });
     res.json({ status: user.status || "approved" });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverErr(res, e);
   }
 });
 
@@ -212,7 +279,7 @@ app.get("/api/me", auth, async (req, res) => {
     }
     res.json({ username: u.username, fullName: u.fullName || "", email: u.email || "", role: u.role || "user", status });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverErr(res, e);
   }
 });
 
@@ -222,7 +289,7 @@ async function adminOnly(req, res, next) {
     if (!u || u.role !== "admin") return res.status(403).json({ error: "Admin access chahiye" });
     next();
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverErr(res, e);
   }
 }
 
@@ -244,11 +311,25 @@ app.post("/api/admin/users/action", auth, adminOnly, async (req, res) => {
     const target = String((req.body && req.body.username) || "");
     const action = String((req.body && req.body.action) || "");
     if (!target) return res.status(400).json({ error: "Username chahiye" });
-    if (!ADMIN_ACTIONS[action] && action !== "delete") return res.status(400).json({ error: "Invalid action" });
+    if (!ADMIN_ACTIONS[action] && action !== "delete" && action !== "setrole") return res.status(400).json({ error: "Invalid action" });
     if (target === req.user) return res.status(400).json({ error: "Apne account par yeh action nahi kar sakte" });
 
     const user = await User.findOne({ username: target });
     if (!user) return res.status(404).json({ error: "User nahi mila" });
+
+    if (action === "setrole") {
+      const role = String((req.body && req.body.role) || "");
+      if (role !== "admin" && role !== "user") return res.status(400).json({ error: "Role sirf 'user' ya 'admin' ho sakta hai" });
+      if ((user.role || "user") === role) return res.json({ ok: true, action, username: target, role, status: user.status || "approved" });
+      if (role === "user") {
+        const otherAdmins = await User.countDocuments({ role: "admin", username: { $ne: target } });
+        if (otherAdmins === 0) return res.status(400).json({ error: "Aakhri admin ko demote nahi kar sakte" });
+      }
+      user.role = role;
+      if (role === "admin" && (user.status || "approved") !== "approved") user.status = "approved";
+      await user.save();
+      return res.json({ ok: true, action, username: target, role: user.role, status: user.status || "approved" });
+    }
 
     if (action === "delete") {
       await User.deleteOne({ username: target });
@@ -261,7 +342,7 @@ app.post("/api/admin/users/action", auth, adminOnly, async (req, res) => {
     await user.save();
     res.json({ ok: true, action, username: target, status: user.status });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverErr(res, e);
   }
 });
 
@@ -276,7 +357,7 @@ app.get("/api/admin/user-cred", auth, adminOnly, async (req, res) => {
     }
     res.json({ username: u.username, fullName: u.fullName || "", email: u.email || "", contact: u.contact || "", password });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverErr(res, e);
   }
 });
 
@@ -285,7 +366,7 @@ app.post("/api/admin/user-password", auth, adminOnly, async (req, res) => {
     const username = String(req.body.username || "");
     const password = String(req.body.password || "");
     if (!username) return res.status(400).json({ error: "Username chahiye" });
-    if (password.length < 4) return res.status(400).json({ error: "Password kam se kam 4 characters ka ho" });
+    if (password.length < 6) return res.status(400).json({ error: "Password kam se kam 6 characters ka ho" });
     if (password.length > 72) return res.status(400).json({ error: "Password 72 characters se chhota rakhein" });
     const u = await User.findOne({ username });
     if (!u) return res.status(404).json({ error: "User nahi mila" });
@@ -294,7 +375,7 @@ app.post("/api/admin/user-password", auth, adminOnly, async (req, res) => {
     await u.save();
     res.json({ ok: true, username });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverErr(res, e);
   }
 });
 
@@ -373,7 +454,7 @@ app.post("/api/images/delete-trade", auth, async (req, res) => {
   res.json({ ok: true, deleted: r.deletedCount });
 });
 
-app.get("/api/db/summary", auth, async (req, res) => {
+app.get("/api/db/summary", auth, adminOnly, async (req, res) => {
   try {
     const [uCount, dCount, iCount] = await Promise.all([
       User.countDocuments(),
@@ -396,18 +477,24 @@ app.get("/api/db/summary", auth, async (req, res) => {
       savedAt: myDoc ? myDoc.updatedAt : null,
     });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    serverErr(res, e);
   }
 });
 
 app.use(async (req, res, next) => {
   const p = req.path;
-  const blocked = ["/server.js", "/package.json", "/package-lock.json", "/.env", "/.git", "/vercel.json", "/.gitignore", "/api/index.js"];
-  if (p.startsWith("/node_modules") || p.startsWith("/mongo-data") || p.startsWith("/.git") || blocked.includes(p)) return res.status(404).end();
+  const blocked = ["/server.js", "/package.json", "/package-lock.json", "/.env", "/.git", "/vercel.json", "/.gitignore", "/api/index.js", "/start.bat"];
+  if (p.startsWith("/node_modules") || p.startsWith("/mongo-data") || p.startsWith("/.git") || p.startsWith("/api/") || p.endsWith(".log") || p.endsWith(".bat") || blocked.includes(p)) return res.status(404).end();
   next();
 });
 
 app.use(express.static(__dirname, { dotfiles: "deny", index: "index.html" }));
+
+app.use((err, req, res, next) => {
+  console.error("[err]", new Date().toISOString(), (err && err.stack) || err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: "Server error — dobara try karein" });
+});
 
 async function connectDB() {
   const isCloud = !!process.env.VERCEL;
@@ -436,8 +523,8 @@ async function connectDB() {
   await bootstrapUsers();
 }
 
-const ADMIN_USER = "adminashar";
-const ADMIN_PASS = "1111";
+const ADMIN_USER = process.env.ADMIN_USER || "adminashar";
+const ADMIN_PASS = process.env.ADMIN_PASS || "1111";
 
 async function bootstrapUsers() {
   await User.updateMany({ status: { $exists: false } }, { $set: { status: "approved" } });
@@ -470,6 +557,7 @@ if (require.main === module) {
         console.log("---------------------------------------------");
         console.log(" Trading Journal running: http://localhost:" + PORT);
         console.log(" DB: set MONGODB_URI env var to use MongoDB Atlas");
+        if (!process.env.ADMIN_PASS) console.warn("[auth] WARNING: default admin password chal raha hai — .env me ADMIN_PASS set karein");
         console.log("---------------------------------------------");
       });
     })

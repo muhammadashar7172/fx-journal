@@ -1,7 +1,7 @@
 {
   "id": "./index.html",
-  "name": "FX Journal — 30 Day Trading Journey Journal",
-  "short_name": "FX Journal",
+  "name": "RR Nexus — 30 Day Trading Journey Journal",
+  "short_name": "RR Nexus",
   "description": "Professional trading journal with before/after screenshots, lot size tracker, 30-day history aur MongoDB Atlas backup.",
   "start_url": "./index.html",
   "scope": "./",

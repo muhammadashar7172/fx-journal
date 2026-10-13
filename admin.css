@@ -68,6 +68,14 @@
 .st-rejected{background:rgba(148,163,184,.14);color:#cbd5e1;border-color:rgba(148,163,184,.3)}
 .st-admin{background:rgba(139,92,246,.16);color:#c4b5fd;border-color:rgba(139,92,246,.36)}
 
+.role-select{
+  font-family:inherit;font-size:11.5px;font-weight:700;padding:5px 8px;border-radius:8px;
+  cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:#9fb0c3;
+  appearance:auto;transition:.14s
+}
+.role-select:hover{filter:brightness(1.2)}
+.role-select.is-admin{background:rgba(139,92,246,.16);border-color:rgba(139,92,246,.36);color:#c4b5fd}
+
 .acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
 .act{
   font-family:inherit;font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:8px;

@@ -72,7 +72,14 @@ function renderRows() {
         (u.fullName ? '<span class="u-sub">' + esc(u.username) + "</span>" : "") + "</td>" +
         '<td class="u-mail">' + esc(u.email || "—") + "</td>" +
         '<td class="u-mono">' + esc(u.username) + "</td>" +
-        "<td>" + (u.role === "admin" ? '<span class="st st-admin">Admin</span>' : '<span class="u-mono">user</span>') + "</td>" +
+        "<td>" +
+        (isSelf
+          ? (u.role === "admin" ? '<span class="st st-admin">Admin (you)</span>' : '<span class="u-mono">user (you)</span>')
+          : '<select class="role-select' + (u.role === "admin" ? " is-admin" : "") + '" data-role-u="' + esc(u.username) + '" aria-label="Role assign karein">' +
+            '<option value="user"' + (u.role !== "admin" ? " selected" : "") + ">user</option>" +
+            '<option value="admin"' + (u.role === "admin" ? " selected" : "") + ">admin</option>" +
+            "</select>") +
+        "</td>" +
         '<td><span class="st st-' + st + '">' + st + "</span></td>" +
         '<td class="u-mono">' + fmtDate(u.createdAt) + "</td>" +
         '<td><div class="acts">' + (acts.join("") || '<span class="u-sub">—</span>') + "</div></td>" +
@@ -177,8 +184,8 @@ $("#cdSave").addEventListener("click", async () => {
   err.hidden = true;
   const pass = $("#cdNewPass").value;
   if (!credUser) return;
-  if (pass.length < 4) {
-    err.textContent = "Password kam se kam 4 characters ka ho";
+  if (pass.length < 6) {
+    err.textContent = "Password kam se kam 6 characters ka ho";
     err.hidden = false;
     return;
   }
@@ -259,6 +266,38 @@ $$("#filters .chip").forEach((c) =>
     renderRows();
   })
 );
+
+$("#userRows").addEventListener("change", async (e) => {
+  const sel = e.target.closest(".role-select");
+  if (!sel) return;
+  const username = sel.dataset.roleU;
+  const role = sel.value;
+  const u = USERS.find((x) => x.username === username);
+  const prev = u ? u.role || "user" : "user";
+  if (role === prev) return;
+
+  const makeAdmin = role === "admin";
+  confirmAction(
+    makeAdmin ? "Admin Banayein" : "Admin Hatayein",
+    "@" + username,
+    makeAdmin
+      ? 'Ye <b>' + esc(username) + "</b> ko <b>Admin</b> banayenge? Iska matlab wo bhi users approve, credentials dekh sakega aur roles assign kar sakega. Account approved bhi ho jayega."
+      : 'Ye <b>' + esc(username) + "</b> ka <b>Admin</b> role hata kar normal <b>user</b> kar denge. Wo admin dashboard use nahi kar payega.",
+    async () => {
+      try {
+        await apiAdminSetRole(username, role);
+        toast(username + " ka role: " + (makeAdmin ? "Admin" : "user"));
+        load(true);
+      } catch (ex) {
+        toast("Fail: " + ex.message);
+        sel.value = prev;
+        sel.classList.toggle("is-admin", prev === "admin");
+      }
+    }
+  );
+  sel.value = prev;
+  sel.classList.toggle("is-admin", prev === "admin");
+});
 
 $("#bell").addEventListener("click", () => {
   FILTER = "pending";

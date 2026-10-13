@@ -1,9 +1,10 @@
-const CACHE = "fx-journal-v1";
+const CACHE = "rr-nexus-v2";
 const CORE = [
   "./",
   "./index.html",
   "./login.html",
   "./db.html",
+  "./db.js",
   "./admin.html",
   "./style.css",
   "./login.css",
